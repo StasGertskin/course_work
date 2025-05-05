@@ -1,0 +1,37 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up venv and install dependencies
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          source venv/bin/activate
+          pytest
+
+      - name: Build Docker image
+        run: docker build -t my-python-app .
+
+      - name: Stop previous container
+        run: docker stop my-python-app || true
+
+      - name: Remove previous container
+        run: docker rm my-python-app || true
+
+      - name: Run new container
+        run: docker run -d -p 8080:80 --name my-python-app my-python-app
